@@ -3,10 +3,11 @@ const {checkAuth} = require('./middleware/auth')
 
 const app = express();
 
-app.use("/",checkAuth);
+app.use("/user",checkAuth);
 
-app.use("/user", (req, res) =>{
-    res.send("User Login");
+app.use("/user/:userId", (req, res) =>{
+    console.log(req.params.userId)
+    res.send("User Login Successful");
 });
 
 
