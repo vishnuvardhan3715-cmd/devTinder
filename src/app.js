@@ -48,6 +48,41 @@ app.get("/feed", async (req, res) => {
     }
 });
 
+
+//delete the user
+app.delete("/user", async (req, res) => {
+    const deleteUserByEmailID = req.body.emailId;
+    try {
+            const user = await User.findOneAndDelete({emailId: deleteUserByEmailID});
+            if(!user){
+                res.status(404).send("User not found");
+            }
+            else {
+                res.send("Deleted successfully");
+            }
+    }
+    catch(err){
+        res.status(400).send("Something went wrong");
+    }
+});
+
+app.patch("/user", async (req, res) => {
+    const updateByEmail = req.body;
+    const getEmail = req.body.emailId;
+    try {
+            const user = await User.findOneAndUpdate({emailId: getEmail}, updateByEmail);
+            if(!user){
+                res.status(404).send("User not found");
+            }
+            else {
+                res.send("Updated successfully");
+            }
+    }
+    catch(err){
+        res.status(400).send("Something went wrong");
+    }
+});
+
 connectDB().then(() => {
     console.log("Database connected");
     app.listen(3000, ()=>{
