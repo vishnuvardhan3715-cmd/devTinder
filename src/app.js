@@ -49,7 +49,7 @@ app.get("/feed", async (req, res) => {
 });
 
 
-//delete the user
+//delete the user by emailId
 app.delete("/user", async (req, res) => {
     const deleteUserByEmailID = req.body.emailId;
     try {
@@ -66,11 +66,14 @@ app.delete("/user", async (req, res) => {
     }
 });
 
+//update the user by emailId
 app.patch("/user", async (req, res) => {
     const updateByEmail = req.body;
     const getEmail = req.body.emailId;
     try {
-            const user = await User.findOneAndUpdate({emailId: getEmail}, updateByEmail);
+            const user = await User.findOneAndUpdate({emailId: getEmail}, updateByEmail, {
+                runValidators: true
+            });
             if(!user){
                 res.status(404).send("User not found");
             }
@@ -79,7 +82,7 @@ app.patch("/user", async (req, res) => {
             }
     }
     catch(err){
-        res.status(400).send("Something went wrong");
+        res.status(400).send("Update failed:"+ err.message);
     }
 });
 
