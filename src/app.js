@@ -70,7 +70,22 @@ app.delete("/user", async (req, res) => {
 app.patch("/user", async (req, res) => {
     const updateByEmail = req.body;
     const getEmail = req.body.emailId;
+
     try {
+
+    const ALLOWED_UPDATES = [
+        "about", "gender", "age", "skills", "emailId"
+    ];
+    
+    const isUpdateAllowed = Object.keys(updateByEmail).every((k) =>{
+        return ALLOWED_UPDATES.includes(k);
+    });
+
+    if(!isUpdateAllowed) {
+        throw new Error("Update not allowed");
+    }
+
+    
             const user = await User.findOneAndUpdate({emailId: getEmail}, updateByEmail, {
                 runValidators: true
             });
