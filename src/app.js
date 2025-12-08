@@ -85,7 +85,6 @@ app.patch("/user", async (req, res) => {
         throw new Error("Update not allowed");
     }
 
-    
             const user = await User.findOneAndUpdate({emailId: getEmail}, updateByEmail, {
                 runValidators: true
             });
