@@ -1,5 +1,8 @@
 const express = require('express');
 const connectDB = require('./config/database');
+const cookieParser = require('cookie-parser');
+const jwt = require('jsonwebtoken');
+const {userAuth} = require('./middleware/auth')
 const app = express();
 
 const User = require('./models/user')
@@ -7,6 +10,7 @@ const { validateSignUpData} = require('./utils/validation')
 const bcrypt = require('bcrypt');
 
 app.use(express.json());
+app.use(cookieParser());
 
 app.post("/signup", async (req, res) => {
     try{
@@ -21,9 +25,9 @@ app.post("/signup", async (req, res) => {
     const user = new User({
         firstName, lastName, emailId, password: passwordHash
     });
-    
-    
+
         await user.save();
+
     res.send("User added successfully");
     }
     catch(err) {
@@ -39,8 +43,13 @@ app.post("/login", async (req, res) => {
          if(!user) {
                 throw new Error("Invalid Credentials");
          }
-         const isPasswordValid = await bcrypt.compare(password, user.password);
+         const isPasswordValid = await user.validatePassword(user.password);
          if(isPasswordValid){
+            //Create a Cookie
+            const token = await user.getJWT();//takes hidden data, strong pass like
+
+            //Add the token to cookie and send the response back to the user
+            res.cookie("token", token);
             res.send("Login Successfull!!!!");
          }
          else{
@@ -51,6 +60,18 @@ app.post("/login", async (req, res) => {
         res.status(400).send("Error saving the user: " + err.message);
     }
 });
+
+//get profile info.
+app.get("/profile",userAuth, async (req, res) =>{
+
+    try {
+        const user = req.user;
+        res.send(user);
+    }
+    catch(err){
+        res.status(400).send("Error saving the user: " + err.message);
+    }
+})
 
 //Get user by email
 app.get("/user", async (req, res) => {
@@ -131,6 +152,7 @@ app.patch("/user", async (req, res) => {
         res.status(400).send("Update failed:"+ err.message);
     }
 });
+
 
 connectDB().then(() => {
     console.log("Database connected");
