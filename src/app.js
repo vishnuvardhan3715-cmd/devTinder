@@ -1,158 +1,18 @@
 const express = require('express');
 const connectDB = require('./config/database');
 const cookieParser = require('cookie-parser');
-const jwt = require('jsonwebtoken');
-const {userAuth} = require('./middleware/auth')
 const app = express();
-
-const User = require('./models/user')
-const { validateSignUpData} = require('./utils/validation')
-const bcrypt = require('bcrypt');
 
 app.use(express.json());
 app.use(cookieParser());
 
-app.post("/signup", async (req, res) => {
-    try{
-    //validation of data
-    validateSignUpData(req);
+const authRouter = require('./routes/auth');
+const profileRouter = require('./routes/profile');
+const requestRouter = require('./routes/request')
 
-    //encrypt of password
-    const { firstName, lastName, emailId, password} = req.body;
-    const passwordHash = await bcrypt.hash(password, 10);
-
-    //creating a new instance of the User model
-    const user = new User({
-        firstName, lastName, emailId, password: passwordHash
-    });
-
-        await user.save();
-
-    res.send("User added successfully");
-    }
-    catch(err) {
-        res.status(400).send("Error saving the user: " + err.message);
-    }
-    
-});
-
-app.post("/login", async (req, res) => {
-    try{
-         const { emailId, password} = req.body;
-         const user = await User.findOne({emailId: emailId});
-         if(!user) {
-                throw new Error("Invalid Credentials");
-         }
-         const isPasswordValid = await user.validatePassword(user.password);
-         if(isPasswordValid){
-            //Create a Cookie
-            const token = await user.getJWT();//takes hidden data, strong pass like
-
-            //Add the token to cookie and send the response back to the user
-            res.cookie("token", token);
-            res.send("Login Successfull!!!!");
-         }
-         else{
-            throw new Error("Invalid Credentials");
-         }
-    }
-    catch(err){
-        res.status(400).send("Error saving the user: " + err.message);
-    }
-});
-
-//get profile info.
-app.get("/profile",userAuth, async (req, res) =>{
-
-    try {
-        const user = req.user;
-        res.send(user);
-    }
-    catch(err){
-        res.status(400).send("Error saving the user: " + err.message);
-    }
-})
-
-//Get user by email
-app.get("/user", async (req, res) => {
-    const userEmail = req.body.emailId;
-    try{
-        const user = await User.find({emailId: userEmail});
-        if(user.length === 0){
-            res.status(404).send("User not found");
-        }
-        else{
-            res.send(user);
-        }
-    }
-    catch(err) {
-        res.status(400).send("Something went wrong");
-    }
-});
-
-//Feed API - GET /feed - get all the users from the db.
-app.get("/feed", async (req, res) => {
-    try{
-        const users = await User.find({});
-        res.send(users);
-    }
-    catch(err){
-        res.status(400).send("Something went wrong");
-    }
-});
-
-
-//delete the user by emailId
-app.delete("/user", async (req, res) => {
-    const deleteUserByEmailID = req.body.emailId;
-    try {
-            const user = await User.findOneAndDelete({emailId: deleteUserByEmailID});
-            if(!user){
-                res.status(404).send("User not found");
-            }
-            else {
-                res.send("Deleted successfully");
-            }
-    }
-    catch(err){
-        res.status(400).send("Something went wrong");
-    }
-});
-
-//update the user by emailId
-app.patch("/user", async (req, res) => {
-    const updateByEmail = req.body;
-    const getEmail = req.body.emailId;
-
-    try {
-
-    const ALLOWED_UPDATES = [
-        "about", "gender", "age", "skills", "emailId"
-    ];
-    
-    const isUpdateAllowed = Object.keys(updateByEmail).every((k) =>{
-        return ALLOWED_UPDATES.includes(k);
-    });
-
-    if(!isUpdateAllowed) {
-        throw new Error("Update not allowed");
-    }
-
-            const user = await User.findOneAndUpdate({emailId: getEmail}, updateByEmail, {
-                runValidators: true
-            });
-            if(!user){
-                res.status(404).send("User not found");
-            }
-            else {
-                res.send("Updated successfully");
-            }
-    }
-    catch(err){
-        res.status(400).send("Update failed:"+ err.message);
-    }
-});
-
+app.use("/", authRouter);
+app.use("/", profileRouter);
+app.use("/", requestRouter);
 
 connectDB().then(() => {
     console.log("Database connected");
