@@ -1,7 +1,7 @@
 const express = require('express');
 const { userAuth } = require('../middleware/auth');
-const {validateEditProfileData} = require('../utils/validation')
-
+const {validateEditProfileData} = require('../utils/validation');
+const bcrypt = require('bcrypt');
 const profileRouter = express.Router();
 
 //get profile info.
@@ -31,6 +31,26 @@ profileRouter.patch("/profile/edit", userAuth, async (req, res) =>{
         res.send("Updated Fields Successfully!!!");
     }
     catch(err){
+        res.status(400).send("Error saving the user: " + err.message);
+    }
+});
+
+profileRouter.patch("/profile/edit-password", userAuth, async (req, res) => {
+    try {
+        const loggedInUser = req.user;
+        const newPassword = req.body.newPassword;
+        const isPasswordValid = await loggedInUser.validatePassword(newPassword);
+        if(isPasswordValid) {
+            throw new Error("Both Passwords are same.Please Update it...");
+        }
+        loggedInUser.password = await bcrypt.hash(newPassword, 10);
+
+        await loggedInUser.save();
+
+        res.send("Updated Password Successfully!!!");
+        
+    }
+    catch (err) {
         res.status(400).send("Error saving the user: " + err.message);
     }
 });
