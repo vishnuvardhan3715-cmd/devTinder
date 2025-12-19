@@ -12,7 +12,7 @@ userRouter.get('/user/requests/received', userAuth, async (req, res) => {
         const connectionRequests = await ConnectionRequest.find({
             toUserId: loggedInUser._id,
             status: "interested"
-        }).populate("fromUserID", USER_SAFE_DATA);//["firstName", "lastName"] ,can also mention like this
+        }).populate("fromUserId", USER_SAFE_DATA);//["firstName", "lastName"] ,can also mention like this
 
         res.json({
             message: "Data fetched successfully",
@@ -23,7 +23,7 @@ userRouter.get('/user/requests/received', userAuth, async (req, res) => {
         res.status(400).send("ERROR: "+ err.message);
     }
 });
-userRouter.post('/user/connections', userAuth, async (req, res) => {
+userRouter.get('/user/connections', userAuth, async (req, res) => {
     try {
         const loggedInUser = req.user;
 
