@@ -23,4 +23,4 @@ status: accepted/rejected
 userRouter
 -GET /user/requests/received
 -GET /user/connections
--GET /user/feed -Gets you the profile of others on the platform
+-GET /feed -Gets you the profile of others on the platform
